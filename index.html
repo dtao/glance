@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>CoderGlance</title>
+  <script type="text/javascript" src="jquery.js"></script>
+  <script type="text/javascript" src="d3.js"></script>
+  <script type="text/javascript" src="d3-cloud.js"></script>
+
+  <style type="text/css">
+  </style>
+
+  <script type="text/javascript">
+    var fill = d3.scale.category20();
+
+    function draw(words) {
+      d3.select("body")
+        .append("svg")
+        .attr("width", 300)
+        .attr("height", 300)
+        .append("g")
+          .attr("transform", "translate(150,150)")
+        .selectAll("text")
+          .data(words)
+        .enter().append("text")
+          .style("font-size", function(d) { return d.size + "px"; })
+          .style("font-family", "Impact")
+          .style("fill", function(d, i) { return fill(i); })
+          .attr("text-anchor", "middle")
+          .attr("transform", function(d) {
+            return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+          })
+          .text(function(d) { return d.text; });
+    }
+
+    function drawTags(tags) {
+      d3.layout.cloud().size([300, 300])
+        .words(tags.map(function(t) {
+          return { text: t.name, size: t.count };
+        }))
+        .rotate(function() { return ~~(Math.random() * 2) * 90; })
+        .font("Impact")
+        .fontSize(function(d) { return d.size; })
+        .on("end", draw)
+        .start();
+    }
+
+    $(document).ready(function() {
+      var $body  = $("body"),
+          $form  = $("form");
+
+      $form.submit(function(e) {
+        var userId = $("input[name='stackoverflow-id']", $form).val();
+
+        e.preventDefault();
+
+        var request = $.ajax({
+          url: $form.attr("action").replace(/\{id\}/, userId),
+          type: $form.attr("method"),
+          dataType: "json",
+          data: $form.serializeArray()
+        });
+
+        request.done(function(result) {
+          drawTags(result.items);
+        });
+
+        request.fail(function() {
+          alert(":(");
+        });
+
+        return false;
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <form action="http://api.stackexchange.com/2.1/users/{id}/tags" method="GET">
+    <input type="hidden" name="site" value="stackoverflow" />
+    <input type="hidden" name="pagesize" value="100" />
+    <input type="hidden" name="order" value="desc" />
+    <input type="hidden" name="sort" value="popular" />
+
+    <label for="stackoverflow-id">StackOverflow ID:</label>
+    <input type="text" name="stackoverflow-id" />
+    <input type="submit" />
+  </form>
+</body>
+
+</html>
