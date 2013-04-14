@@ -98,6 +98,19 @@
     <input type="submit" value="Search" />
   </form>
 
+  <div id="user">
+    <h1 data-api-attr="display_name"></h1>
+    <img data-api-attr="profile_image" data-api-attr-assign="src" />
+    <div class="attributes">
+      <div>Reputation: <span data-api-attr="reputation"></span></div>
+      <div>Website:
+        <a data-api-attr="website_url" data-api-attr-assign="href">
+          <span data-api-attr="website_url"></span>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div id="cloud" style="display: none;"></div>
 </body>
 
@@ -188,8 +201,22 @@
     });
   }
 
+  function drawUser(user) {
+    $("*", $user).each(function() {
+      var $el    = $(this),
+          attr   = $el.attr("data-api-attr"),
+          assign = $el.attr("data-api-attr-assign");
+      if (assign) {
+        $el.attr(assign, user[attr]);
+      } else {
+        $el.text(user[attr]);
+      }
+    });
+  }
+
   var $body  = $("body"),
       $form  = $("form"),
+      $user  = $("#user"),
       $cloud = $("#cloud");
 
   $form.submit(function(e) {
@@ -215,6 +242,17 @@
 
     request.always(function() {
       $form.removeClass("loading").hide();
+    });
+
+    var profileRequest = $.ajax({
+      url: "http://api.stackexchange.com/2.1/users/" + userId,
+      type: "GET",
+      dataType: "json",
+      data: { site: "stackoverflow" }
+    });
+
+    profileRequest.done(function(result) {
+      drawUser(result.items[0]);
     });
 
     return false;
