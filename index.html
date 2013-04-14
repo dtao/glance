@@ -171,6 +171,8 @@
       .fontSize(function(d) { return fontSize(d.count); })
       .text(function(d) { return d.name; });
 
+  // This is basically totally stolen from here:
+  // http://www.jasondavies.com/wordcloud/
   function draw(words, bounds) {
     $cloud.show();
 
