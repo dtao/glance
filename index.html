@@ -66,6 +66,22 @@
     #user h1 {
       font-size: 48px;
       letter-spacing: -4px;
+      margin-bottom: 0;
+    }
+
+    #user span {
+      font-size: 150%;
+      font-weight: bold;
+      letter-spacing: -1px;
+      vertical-align: middle;
+    }
+
+    #user a {
+      text-decoration: none;
+    }
+
+    #user a:hover {
+      text-decoration: underline;
     }
 
     #cloud {
@@ -104,8 +120,8 @@
     <input type="hidden" name="order" value="desc" />
     <input type="hidden" name="sort" value="popular" />
 
-    <label for="stackoverflow-id">StackOverflow ID:</label>
-    <input type="text" name="stackoverflow-id" />
+    <label for="search-input">Find yourself on StackOveflow</label>
+    <input type="text" name="search-input" placeholder="Enter a name or ID" />
     <input type="submit" value="Search" />
   </form>
 
@@ -195,6 +211,13 @@
   }
 
   function drawTags(tags) {
+    $form.removeClass("loading").hide();
+
+    if (!tags || tags.length === 0) {
+      drawFailureTags();
+      return;
+    }
+
     fontSize = d3.scale.log()
       .domain([1, d3.max(tags, function(t) { return t.count; })])
       .range([12, 128]);
@@ -202,13 +225,26 @@
   }
 
   // just to be funny
-  function getFailureTags() {
+  function drawFailureTags() {
     var words = [
       "oh no!", "disaster", "failure", "error", "the end", "game over",
-      "what a mess", "problem", "catastrophe", "epic fail", "facepalm"
+      "what a mess", "uh oh", "problem", "catastrophe", "epic fail", "facepalm"
     ];
-    return words.map(function(w) {
+    drawTags(words.map(function(w) {
       return { name: w, count: (~~(Math.random() * 90) + 10) };
+    }));
+  }
+
+  function getUserProfile(userId) {
+    var profileRequest = $.ajax({
+      url: "http://api.stackexchange.com/2.1/users/" + userId,
+      type: "GET",
+      dataType: "json",
+      data: { site: "stackoverflow" }
+    });
+
+    profileRequest.done(function(result) {
+      drawUser(result.items[0]);
     });
   }
 
@@ -233,17 +269,7 @@
     user ? $user.show() : $user.hide();
   }
 
-  var $body  = $("body"),
-      $form  = $("form"),
-      $user  = $("#user"),
-      $cloud = $("#cloud");
-
-  $form.submit(function(e) {
-    var userId = $("input[name='stackoverflow-id']", $form).val();
-
-    $form.addClass("loading");
-    e.preventDefault();
-
+  function searchByUserId(userId, profile) {
     var request = $.ajax({
       url: $form.attr("action").replace(/\{id\}/, userId),
       type: $form.attr("method"),
@@ -256,23 +282,60 @@
     });
 
     request.fail(function() {
-      drawTags(getFailureTags());
+      drawFailureTags();
     });
 
-    request.always(function() {
-      $form.removeClass("loading").hide();
-    });
+    if (profile) {
+      drawUser(profile);
+    } else {
+      getUserProfile(userId);
+    }
+  }
 
-    var profileRequest = $.ajax({
-      url: "http://api.stackexchange.com/2.1/users/" + userId,
+  function searchByName(name) {
+    var request = $.ajax({
+      url: "http://api.stackexchange.com/2.1/users/",
       type: "GET",
       dataType: "json",
-      data: { site: "stackoverflow" }
+      data: {
+        site: "stackoverflow",
+        sort: "reputation",
+        order: "desc",
+        inname: name
+      }
     });
 
-    profileRequest.done(function(result) {
-      drawUser(result.items[0]);
+    request.done(function(result) {
+      var firstResult;
+      if (result.items && result.items.length > 0) {
+        firstResult = result.items[0];
+        searchByUserId(firstResult.user_id, firstResult);
+      } else {
+        drawFailureTags();
+      }
     });
+
+    request.fail(function() {
+      drawFailureTags();
+    });
+  }
+
+  var $body   = $("body"),
+      $form   = $("form"),
+      $search = $("input[name='search-input']", $form),
+      $user   = $("#user"),
+      $cloud  = $("#cloud");
+
+  $form.submit(function(e) {
+    $form.addClass("loading");
+    e.preventDefault();
+
+    var query = $search.val();
+    if (query.match(/^\s*\d+\s*$/)) {
+      searchByUserId(query);
+    } else {
+      searchByName(query);
+    }
 
     return false;
   });
