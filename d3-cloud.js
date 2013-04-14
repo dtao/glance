@@ -21,7 +21,6 @@
       var board = zeroArray((size[0] >> 5) * size[1]),
           bounds = null,
           n = words.length,
-          i = -1,
           tags = [],
           data = words.map(function(d, i) {
             d.text = text.call(this, d, i);
@@ -34,17 +33,15 @@
             return d;
           }).sort(function(a, b) { return b.size - a.size; });
 
-      if (timer) clearInterval(timer);
-      timer = setInterval(step, 0);
-      step();
+      if (timer) clearTimeout(timer);
+      step(0);
 
       return cloud;
 
-      function step() {
-        var start = +new Date,
-            d;
-        while (+new Date - start < timeInterval && ++i < n && timer) {
-          d = data[i];
+      function step(i) {
+        timer = setTimeout(function() {
+          var start = +new Date,
+              d = data[i];
           d.x = (size[0] * (Math.random() + .5)) >> 1;
           d.y = (size[1] * (Math.random() + .5)) >> 1;
           cloudSprite(d, data, i);
@@ -57,11 +54,15 @@
             d.x -= size[0] >> 1;
             d.y -= size[1] >> 1;
           }
-        }
-        if (i >= n) {
-          cloud.stop();
-          event.end(tags, bounds);
-        }
+
+          if (i < n - 1) {
+            step(i + 1);
+
+          } else {
+            timer = null;
+            event.end(tags, bounds);
+          }
+        }, 0);
       }
     }
 
