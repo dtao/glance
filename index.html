@@ -15,6 +15,11 @@
       padding: 0;
     }
 
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      text-align: center;
+    }
+
     form {
       position: absolute;
       top: 50%;
@@ -23,11 +28,11 @@
       margin-top: -60px;
       margin-left: -150px;
       background-color: #eee;
-      font-family: Helvetica, Arial, sans-serif;
       font-size: 20px;
       font-weight: 300;
       line-height: 24px;
       padding: 8px;
+      text-align: left;
     }
 
     label,
@@ -51,21 +56,27 @@
       height: 92px;
     }
 
+    #user {
+      width: 960px;
+      border-bottom: 1px solid black;
+      margin: auto;
+      padding: 20px;
+    }
+
+    #user h1 {
+      font-size: 48px;
+      letter-spacing: -4px;
+    }
+
     #cloud {
-      position: absolute;
-      top: 50%;
-      left: 50%;
       height: 600px;
       width: 960px;
-      margin-top: -300px;
-      margin-left: -480px;
-      text-align: center;
+      margin: 20px auto;
     }
 
     #cloud a {
       color: #888;
       font-size: 36px;
-      font-family: Helvetica, Arial, sans-serif;
       font-weight: bold;
       letter-spacing: -2px;
       text-decoration: none;
@@ -98,7 +109,7 @@
     <input type="submit" value="Search" />
   </form>
 
-  <div id="user">
+  <div id="user" style="display: none;">
     <h1 data-api-attr="display_name"></h1>
     <img data-api-attr="profile_image" data-api-attr-assign="src" />
     <div class="attributes">
@@ -205,13 +216,21 @@
     $("*", $user).each(function() {
       var $el    = $(this),
           attr   = $el.attr("data-api-attr"),
-          assign = $el.attr("data-api-attr-assign");
+          assign = $el.attr("data-api-attr-assign"),
+          value  = (user ? user[attr] : null) || "";
+
+      if (!attr) {
+        return;
+      }
+
       if (assign) {
-        $el.attr(assign, user[attr]);
+        $el.attr(assign, value);
       } else {
-        $el.text(user[attr]);
+        $el.text(value);
       }
     });
+
+    user ? $user.show() : $user.hide();
   }
 
   var $body  = $("body"),
@@ -259,6 +278,7 @@
   });
 
   $cloud.on("click", "a", function() {
+    drawUser(null);
     $cloud.empty().hide();
     $form.show()[0].reset();
     return false;
