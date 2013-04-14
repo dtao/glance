@@ -86,12 +86,27 @@
       border-bottom: 1px solid black;
       margin: auto;
       padding: 20px;
+      text-align: left;
     }
 
-    #user h1 {
+    #user .pic,
+    #user .info {
+      display: inline-block;
+    }
+
+    #user .pic {
+      margin-right: 12px;
+      vertical-align: top;
+    }
+
+    #user .name,
+    #user .attributes {
+      vertical-align: bottom;
+    }
+
+    #user .name {
       font-size: 48px;
       letter-spacing: -4px;
-      margin-bottom: 0;
     }
 
     #user span {
@@ -109,11 +124,11 @@
       text-decoration: underline;
     }
 
-    #user h1 a {
+    #user .name a {
       color: black;
     }
 
-    #user h1 a:hover {
+    #user .name a:hover {
       color: #888;
       text-decoration: none;
     }
@@ -180,18 +195,22 @@
   </form>
 
   <div id="user" style="display: none;">
-    <h1>
-      <a data-api-attr="link" data-api-attr-assign="href">
-        <span data-api-attr="display_name"></span>
-      </a>
-    </h1>
-    <img data-api-attr="profile_image" data-api-attr-assign="src" />
-    <div class="attributes">
-      <div>Reputation: <span data-api-attr="reputation"></span></div>
-      <div>Website:
-        <a data-api-attr="website_url" data-api-attr-assign="href">
-          <span data-api-attr="website_url"></span>
+    <div class="pic">
+      <img data-api-attr="profile_image" data-api-attr-assign="src" />
+    </div>
+    <div class="info">
+      <div class="name">
+        <a data-api-attr="link" data-api-attr-assign="href">
+          <span data-api-attr="display_name"></span>
         </a>
+      </div>
+      <div class="attributes">
+        <div>Reputation: <span data-api-attr="reputation"></span></div>
+        <div>Website:
+          <a data-api-attr="website_url" data-api-attr-assign="href">
+            <span data-api-attr="website_url"></span>
+          </a>
+        </div>
       </div>
     </div>
   </div>
