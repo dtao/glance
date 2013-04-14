@@ -4,6 +4,7 @@
 <head>
   <title>Glance</title>
   <link rel="shortcut icon" href="/assets/favicon.ico">
+  <script type="text/javascript" src="https://api.stackexchange.com/js/2.0/all.js"></script>
   <script type="text/javascript" src="/assets/jquery.js"></script>
   <script type="text/javascript" src="/assets/d3.js"></script>
   <script type="text/javascript" src="/assets/d3-cloud.js"></script>
@@ -161,6 +162,7 @@
     <input type="hidden" name="pagesize" value="100" />
     <input type="hidden" name="order" value="desc" />
     <input type="hidden" name="sort" value="popular" />
+    <input type="hidden" name="key" value="ucnOTpEVwsc9OK6gxvShlw((" />
 
     <label for="search-input">
       Find yourself on
@@ -312,7 +314,10 @@
       url: "http://api.stackexchange.com/2.1/users/" + userId,
       type: "GET",
       dataType: "json",
-      data: { site: "stackoverflow" }
+      data: {
+        site: "stackoverflow",
+        key: "ucnOTpEVwsc9OK6gxvShlw(("
+      }
     });
 
     profileRequest.done(function(result) {
@@ -383,7 +388,8 @@
         site: "stackoverflow",
         sort: "reputation",
         order: "desc",
-        inname: name
+        inname: name,
+        key: "ucnOTpEVwsc9OK6gxvShlw(("
       }
     });
 
@@ -407,6 +413,10 @@
     if (userId.match(/^\d+$/)) {
       searchByUserId(userId);
     }
+  }
+
+  function getChannelUrl() {
+    return window.location.protocol + "//" + window.location.host + "/assets/blank.html";
   }
 
   $form.submit(function(e) {
@@ -441,7 +451,14 @@
     }, 2000);
   }
 
-  findUserFromLocationHash();
+  SE.init({
+    clientId: 1429,
+    key: "ucnOTpEVwsc9OK6gxvShlw((",
+    channelUrl: getChannelUrl(),
+    complete: function(data) {
+      findUserFromLocationHash();
+    }
+  });
 </script>
 
 </html>
