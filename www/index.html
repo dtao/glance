@@ -25,15 +25,21 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 316px;
-      margin-top: -60px;
-      margin-left: -150px;
+      width: 400px;
+      margin-top: -136px;
+      margin-left: -200px;
       background-color: #eee;
+      border: 3px solid #048;
+      border-radius: 24px;
       font-size: 20px;
       font-weight: 300;
       line-height: 24px;
-      padding: 8px;
+      padding: 24px;
       text-align: left;
+    }
+
+    form:hover {
+      border-color: #08f;
     }
 
     label,
@@ -54,7 +60,24 @@
 
     form.loading {
       background: url(assets/progress-bar.gif) no-repeat center;
+      border: none;
       height: 92px;
+    }
+
+    .sites {
+      display: inline-block;
+      height: 24px;
+      overflow: hidden;
+      vertical-align: bottom;
+    }
+
+    .sites span {
+      display: block;
+      color: #840;
+    }
+
+    form:hover .sites span {
+      color: #f80;
     }
 
     #user {
@@ -139,7 +162,17 @@
     <input type="hidden" name="order" value="desc" />
     <input type="hidden" name="sort" value="popular" />
 
-    <label for="search-input">Find yourself on StackOveflow</label>
+    <label for="search-input">
+      Find yourself on
+      <div class="sites">
+        <span>StackOverflow</span>
+
+        <!-- sites to add eventually -->
+        <!-- <span>GitHub</span> -->
+        <!-- <span>BitBucket</span> -->
+        <!-- <span>LinkedIn</span> -->
+      </div>
+    </label>
     <input type="text" name="search-input" placeholder="Enter a name or ID" />
     <input type="submit" value="Search" />
   </form>
@@ -175,6 +208,7 @@
   var $body   = $("body"),
       $form   = $("form"),
       $search = $("input[name='search-input']", $form),
+      $sites  = $(".sites", $form),
       $user   = $("#user"),
       $cloud  = $("#cloud"),
       $links  = $("#links"),
@@ -246,12 +280,11 @@
         .delay(1000)
         .duration(750)
         .attr("transform", "translate(" + [w >> 1, h >> 1] + ")scale(" + scale + ")");
+    $form.removeClass("loading").hide();
     $links.show();
   }
 
   function drawTags(tags) {
-    $form.removeClass("loading").hide();
-
     if (!tags || tags.length === 0) {
       drawFailureTags();
       return;
@@ -394,9 +427,19 @@
     $cloud.empty().hide();
     $links.hide();
     $form.show()[0].reset();
+    $search.focus();
     window.location.hash = "";
     return false;
   });
+
+  if ($sites.length > 1) {
+    setInterval(function() {
+      $sites.slideUp(function() {
+        $sites.find("span:first").remove().appendTo($sites);
+        $sites.slideDown();
+      });
+    }, 2000);
+  }
 
   findUserFromLocationHash();
 </script>
