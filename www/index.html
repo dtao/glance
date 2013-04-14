@@ -100,18 +100,6 @@
       margin: 20px auto;
     }
 
-    #cloud a {
-      color: #888;
-      font-size: 36px;
-      font-weight: bold;
-      letter-spacing: -2px;
-      text-decoration: none;
-    }
-
-    #cloud a:hover {
-      color: #bbb;
-    }
-
     #cloud text {
       cursor: pointer;
     }
@@ -119,6 +107,27 @@
     #cloud text:hover {
       opacity: 0.8 !important;
       filter: alpha(opacity=50) !important;
+    }
+
+    #links a {
+      display: inline-block;
+      margin: 12px;
+      font-size: 36px;
+      font-weight: bold;
+      letter-spacing: -2px;
+      text-decoration: none;
+    }
+
+    #links a.share {
+      color: #e7969c;
+    }
+
+    #links a.search {
+      color: #843c39;
+    }
+
+    #links a:hover {
+      color: #bbb;
     }
   </style>
 </head>
@@ -153,17 +162,31 @@
   </div>
 
   <div id="cloud" style="display: none;"></div>
+
+  <div id="links" style="display: none;">
+    <a class="share" href="/">Share this page</a>
+    <a class="search" href="/">Search again?</a>
+  </div>
 </body>
 
 <script type="text/javascript">
   var fill = d3.scale.category20b();
 
-  var w = 960,
-      h = 600,
+  var $body   = $("body"),
+      $form   = $("form"),
+      $search = $("input[name='search-input']", $form),
+      $user   = $("#user"),
+      $cloud  = $("#cloud"),
+      $links  = $("#links"),
+      $share  = $("a.share", $links),
+      $repeat = $("a.search", $links);
+
+  var w = $cloud.width(),
+      h = $cloud.height(),
       fontSize;
 
   var layout = d3.layout.cloud()
-      .size([960, 600])
+      .size([w, h])
       .timeInterval(10)
       .font("Impact")
       .rotate(function(d) { return ~~(Math.random() * 5) * 30 - 60; })
@@ -223,7 +246,7 @@
         .delay(1000)
         .duration(750)
         .attr("transform", "translate(" + [w >> 1, h >> 1] + ")scale(" + scale + ")");
-    $("<a href='/'>").text("Search again?").appendTo($cloud);
+    $links.show();
   }
 
   function drawTags(tags) {
@@ -285,6 +308,7 @@
     if (user) {
       $user.show()
       window.location.hash = user.user_id;
+      $share.attr("href", window.location.toString());
     } else {
       $user.hide();
     }
@@ -352,12 +376,6 @@
     }
   }
 
-  var $body   = $("body"),
-      $form   = $("form"),
-      $search = $("input[name='search-input']", $form),
-      $user   = $("#user"),
-      $cloud  = $("#cloud");
-
   $form.submit(function(e) {
     e.preventDefault();
 
@@ -371,9 +389,10 @@
     return false;
   });
 
-  $cloud.on("click", "a", function() {
+  $links.on("click", "a.search", function() {
     drawUser(null);
     $cloud.empty().hide();
+    $links.hide();
     $form.show()[0].reset();
     window.location.hash = "";
     return false;
