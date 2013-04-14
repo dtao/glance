@@ -8,10 +8,71 @@
   <script type="text/javascript" src="d3-cloud.js"></script>
 
   <style type="text/css">
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    form {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 316px;
+      margin-top: -60px;
+      margin-left: -150px;
+      background-color: #eee;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 20px;
+      font-weight: 300;
+      line-height: 24px;
+      padding: 8px;
+    }
+
+    label,
+    input {
+      display: block;
+      font-size: 20px;
+      margin: 8px 0;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    form.loading * {
+      display: none;
+    }
+
+    form.loading {
+      background: url(progress-bar.gif) no-repeat center;
+      height: 92px;
+    }
+
     #cloud {
+      position: absolute;
+      top: 50%;
+      left: 50%;
       height: 600px;
       width: 960px;
-      margin: auto;
+      margin-top: -300px;
+      margin-left: -480px;
+      text-align: center;
+    }
+
+    #cloud a {
+      color: #888;
+      font-size: 36px;
+      font-family: Helvetica, Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: -2px;
+      text-decoration: none;
+    }
+
+    #cloud a:hover {
+      color: #bbb;
     }
 
     #cloud text {
@@ -34,10 +95,10 @@
 
     <label for="stackoverflow-id">StackOverflow ID:</label>
     <input type="text" name="stackoverflow-id" />
-    <input type="submit" />
+    <input type="submit" value="Search" />
   </form>
 
-  <div id="cloud"></div>
+  <div id="cloud" style="display: none;"></div>
 </body>
 
 <script type="text/javascript">
@@ -57,15 +118,17 @@
       .fontSize(function(d) { return fontSize(d.count); })
       .text(function(d) { return d.name; });
 
-  var svg = d3.select("#cloud")
-      .append("svg")
-      .attr("width", w)
-      .attr("height", h);
-
-  var background = svg.append("g"),
-      cloud = svg.append("g").attr("transform", "translate(" + [w >> 1, h >> 1] + ")");
-
   function draw(words, bounds) {
+    $cloud.show();
+
+    var svg = d3.select("#cloud")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h);
+
+    var background = svg.append("g"),
+        cloud = svg.append("g").attr("transform", "translate(" + [w >> 1, h >> 1] + ")");
+
     var scale = bounds ? Math.min(
         w / Math.abs(bounds[1].x - w / 2),
         w / Math.abs(bounds[0].x - w / 2),
@@ -73,7 +136,7 @@
         h / Math.abs(bounds[0].y - h / 2)) / 2 : 1;
     var text = cloud.selectAll("text")
         .data(words, function(d) {
-          return d.text.toLowerCase();
+          return d.text ? d.text.toLowerCase() : "";
         });
     text.transition()
         .duration(1000)
@@ -104,6 +167,7 @@
         .delay(1000)
         .duration(750)
         .attr("transform", "translate(" + [w >> 1, h >> 1] + ")scale(" + scale + ")");
+    $("<a href='/'>").text("Search again?").appendTo($cloud);
   }
 
   function drawTags(tags) {
@@ -113,12 +177,25 @@
     layout.stop().words(tags, Math.min(tags.length, 100)).start();
   }
 
+  // just to be funny
+  function getFailureTags() {
+    var words = [
+      "oh no!", "disaster", "failure", "error", "the end", "game over",
+      "what a mess", "problem", "catastrophe", "epic fail", "facepalm"
+    ];
+    return words.map(function(w) {
+      return { name: w, count: (~~(Math.random() * 90) + 10) };
+    });
+  }
+
   var $body  = $("body"),
-      $form  = $("form");
+      $form  = $("form"),
+      $cloud = $("#cloud");
 
   $form.submit(function(e) {
     var userId = $("input[name='stackoverflow-id']", $form).val();
 
+    $form.addClass("loading");
     e.preventDefault();
 
     var request = $.ajax({
@@ -133,9 +210,19 @@
     });
 
     request.fail(function() {
-      alert(":(");
+      drawTags(getFailureTags());
     });
 
+    request.always(function() {
+      $form.removeClass("loading").hide();
+    });
+
+    return false;
+  });
+
+  $cloud.on("click", "a", function() {
+    $cloud.empty().hide();
+    $form.show()[0].reset();
     return false;
   });
 </script>
