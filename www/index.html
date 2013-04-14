@@ -282,7 +282,12 @@
       }
     });
 
-    user ? $user.show() : $user.hide();
+    if (user) {
+      $user.show()
+      window.location.hash = user.user_id;
+    } else {
+      $user.hide();
+    }
   }
 
   function searchByUserId(userId, profile) {
@@ -340,10 +345,10 @@
     });
   }
 
-  function findUserFromQueryString() {
-    var userIdMatch = window.location.search.match(/id=(\d+)/);
-    if (userIdMatch) {
-      searchByUserId(userIdMatch[1]);
+  function findUserFromLocationHash() {
+    var userId = window.location.hash.replace(/^#/, "");
+    if (userId.match(/^\d+$/)) {
+      searchByUserId(userId);
     }
   }
 
@@ -370,10 +375,11 @@
     drawUser(null);
     $cloud.empty().hide();
     $form.show()[0].reset();
+    window.location.hash = "";
     return false;
   });
 
-  findUserFromQueryString();
+  findUserFromLocationHash();
 </script>
 
 </html>
