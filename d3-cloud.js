@@ -68,7 +68,7 @@
 
     cloud.stop = function() {
       if (timer) {
-        clearInterval(timer);
+        clearTimeout(timer);
         timer = null;
       }
       return cloud;
