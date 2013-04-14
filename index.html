@@ -9,8 +9,18 @@
 
   <style type="text/css">
     #cloud {
+      height: 600px;
       width: 960px;
       margin: auto;
+    }
+
+    #cloud text {
+      cursor: pointer;
+    }
+
+    #cloud text:hover {
+      opacity: 0.8 !important;
+      filter: alpha(opacity=50) !important;
     }
   </style>
 </head>
@@ -35,16 +45,17 @@
 
   var w = 960,
       h = 600,
-      fontSize = d3.scale.log().range([16, 96]);
+      fontSize;
 
   var layout = d3.layout.cloud()
-      .font("Impact")
-      .spiral("archimedean")
+      .size([960, 600])
       .timeInterval(10)
-      .size([w, h])
-      .fontSize(function(d) { return fontSize(+d.count); })
-      .text(function(d) { return d.name; })
-      .on("end", draw);
+      .font("Impact")
+      .rotate(function(d) { return ~~(Math.random() * 5) * 30 - 60; })
+      .padding(1)
+      .on("end", draw)
+      .fontSize(function(d) { return fontSize(d.count); })
+      .text(function(d) { return d.name; });
 
   var svg = d3.select("#cloud")
       .append("svg")
@@ -96,6 +107,9 @@
   }
 
   function drawTags(tags) {
+    fontSize = d3.scale.log()
+      .domain([1, d3.max(tags, function(t) { return t.count; })])
+      .range([12, 128]);
     layout.stop().words(tags, Math.min(tags.length, 100)).start();
   }
 
