@@ -286,6 +286,8 @@
   }
 
   function searchByUserId(userId, profile) {
+    $form.addClass("loading");
+
     var request = $.ajax({
       url: $form.attr("action").replace(/\{id\}/, userId),
       type: $form.attr("method"),
@@ -309,6 +311,8 @@
   }
 
   function searchByName(name) {
+    $form.addClass("loading");
+
     var request = $.ajax({
       url: "http://api.stackexchange.com/2.1/users/",
       type: "GET",
@@ -336,6 +340,13 @@
     });
   }
 
+  function findUserFromQueryString() {
+    var userIdMatch = window.location.search.match(/id=(\d+)/);
+    if (userIdMatch) {
+      searchByUserId(userIdMatch[1]);
+    }
+  }
+
   var $body   = $("body"),
       $form   = $("form"),
       $search = $("input[name='search-input']", $form),
@@ -343,7 +354,6 @@
       $cloud  = $("#cloud");
 
   $form.submit(function(e) {
-    $form.addClass("loading");
     e.preventDefault();
 
     var query = $search.val();
@@ -362,6 +372,8 @@
     $form.show()[0].reset();
     return false;
   });
+
+  findUserFromQueryString();
 </script>
 
 </html>
