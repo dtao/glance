@@ -84,6 +84,15 @@
       text-decoration: underline;
     }
 
+    #user h1 a {
+      color: black;
+    }
+
+    #user h1 a:hover {
+      color: #888;
+      text-decoration: none;
+    }
+
     #cloud {
       height: 600px;
       width: 960px;
@@ -126,7 +135,11 @@
   </form>
 
   <div id="user" style="display: none;">
-    <h1 data-api-attr="display_name"></h1>
+    <h1>
+      <a data-api-attr="link" data-api-attr-assign="href">
+        <span data-api-attr="display_name"></span>
+      </a>
+    </h1>
     <img data-api-attr="profile_image" data-api-attr-assign="src" />
     <div class="attributes">
       <div>Reputation: <span data-api-attr="reputation"></span></div>
