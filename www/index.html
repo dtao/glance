@@ -6,6 +6,7 @@
   <link rel="shortcut icon" href="/assets/favicon.ico">
   <script type="text/javascript" src="https://api.stackexchange.com/js/2.0/all.js"></script>
   <script type="text/javascript" src="/assets/jquery.js"></script>
+  <script type="text/javascript" src="/assets/mustache.js"></script>
   <script type="text/javascript" src="/assets/d3.js"></script>
   <script type="text/javascript" src="/assets/d3-cloud.js"></script>
 
@@ -133,19 +134,90 @@
       text-decoration: none;
     }
 
-    #cloud {
+    #tabs {
+      width: 960px;
+      margin: auto;
+      line-height: 40px;
+      text-align: left;
+    }
+
+    #tabs a {
+      color: #888;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: -1px;
+      text-decoration: none;
+    }
+
+    #tabs a:hover {
+      color: #bbb;
+    }
+
+    #tabs a.selected {
+      color: #000;
+    }
+
+    #stackoverflow-cloud {
       height: 600px;
       width: 960px;
       margin: 20px auto;
     }
 
-    #cloud text {
+    #stackoverflow-cloud text {
       cursor: pointer;
     }
 
-    #cloud text:hover {
+    #stackoverflow-cloud text:hover {
       opacity: 0.8 !important;
       filter: alpha(opacity=50) !important;
+    }
+
+    #github-repos {
+      display: table;
+      width: 960px;
+      margin: 20px auto;
+      text-align: left;
+    }
+
+    #github-repos .repo {
+      height: 30px;
+      display: table-row;
+      color: #888;
+    }
+
+    #github-repos .repo:hover {
+      color: #000;
+    }
+
+    #github-repos .repo a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    #github-repos .repo a:hover {
+      text-decoration: underline;
+    }
+
+    #github-repos .repo div {
+      display: table-cell;
+      line-height: 30px;
+    }
+
+    #github-repos .repo .name {
+      width: 50%;
+      font-family: Impact;
+      font-size: 150%;
+      letter-spacing: 1px;
+    }
+
+    #github-repos .repo .watchers:after {
+      content: " watchers";
+      font-size: 90%;
+    }
+
+    #github-repos .repo .forks:after {
+      content: " forks";
+      font-size: 90%;
     }
 
     #links a {
@@ -183,11 +255,13 @@
       Find yourself on
       <div class="sites">
         <span>StackOverflow</span>
+        <span>GitHub</span>
 
         <!-- sites to add eventually -->
-        <!-- <span>GitHub</span> -->
         <!-- <span>BitBucket</span> -->
+        <!-- <span>CodePlex</span> -->
         <!-- <span>LinkedIn</span> -->
+        <!-- <span>WordPress</span> -->
       </div>
     </label>
     <input type="text" name="search-input" placeholder="Enter a name or ID" />
@@ -215,26 +289,46 @@
     </div>
   </div>
 
-  <div id="cloud" style="display: none;"></div>
+  <div id="tabs" style="display: none;">
+    <a class="tab selected" href="#stackoverflow-cloud">StackOverflow</a>
+    <a class="tab" href="#github-repos">GitHub</a>
+  </div>
+
+  <div class="tab-page" id="stackoverflow-cloud" style="display: none;"></div>
+
+  <div class="tab-page" id="github-repos" style="display: none;"></div>
 
   <div id="links" style="display: none;">
     <a class="share" href="/">Share this page</a>
     <a class="search" href="/">Search again?</a>
   </div>
+
+  <script id="repo-template" type="text/html">
+    <div class="repo">
+      <div class="name">
+        <a href="{{html_url}}">{{name}}</a>
+      </div>
+      <div class="language">{{language}}</div>
+      <div class="forks">{{forks}}</div>
+      <div class="watchers">{{watchers}}</div>
+    </div>
+  </script>
 </body>
 
 <script type="text/javascript">
-  var fill = d3.scale.category20b();
-
   var $body   = $("body"),
       $form   = $("form"),
       $search = $("input[name='search-input']", $form),
       $sites  = $(".sites", $form),
       $user   = $("#user"),
-      $cloud  = $("#cloud"),
+      $tabs   = $("#tabs"),
+      $cloud  = $("#stackoverflow-cloud"),
+      $github = $("#github-repos"),
       $links  = $("#links"),
       $share  = $("a.share", $links),
       $repeat = $("a.search", $links);
+
+  var repoTemplate = $.trim($("#repo-template").text());
 
   var w = $cloud.width(),
       h = $cloud.height(),
@@ -255,7 +349,9 @@
   function draw(words, bounds) {
     $cloud.show();
 
-    var svg = d3.select("#cloud")
+    var fill = d3.scale.category20b();
+
+    var svg = d3.select("#stackoverflow-cloud")
         .append("svg")
         .attr("width", w)
         .attr("height", h);
@@ -301,7 +397,8 @@
         .delay(1000)
         .duration(750)
         .attr("transform", "translate(" + [w >> 1, h >> 1] + ")scale(" + scale + ")");
-    $form.removeClass("loading").hide();
+    $form.removeClass("loading").css("visibility", "hidden");
+    $tabs.show();
     $links.show();
   }
 
@@ -371,7 +468,42 @@
     }
   }
 
-  function searchByUserId(userId, profile) {
+  function searchByName(name) {
+    $form.addClass("loading");
+    searchStackOverflowByName(name);
+    searchGitHubByName(name);
+  }
+
+  function searchStackOverflowByName(name) {
+    var request = $.ajax({
+      url: "http://api.stackexchange.com/2.1/users/",
+      type: "GET",
+      dataType: "json",
+      data: {
+        site: "stackoverflow",
+        sort: "reputation",
+        order: "desc",
+        inname: name,
+        key: "ucnOTpEVwsc9OK6gxvShlw(("
+      }
+    });
+
+    request.done(function(result) {
+      var firstResult;
+      if (result.items && result.items.length > 0) {
+        firstResult = result.items[0];
+        searchStackOverflowTags(firstResult.user_id, firstResult);
+      } else {
+        drawFailureTags();
+      }
+    });
+
+    request.fail(function() {
+      drawFailureTags();
+    });
+  }
+
+  function searchStackOverflowTags(userId, profile) {
     $form.addClass("loading");
 
     var request = $.ajax({
@@ -396,41 +528,46 @@
     }
   }
 
-  function searchByName(name) {
-    $form.addClass("loading");
-
+  function searchGitHubByName(name) {
     var request = $.ajax({
-      url: "http://api.stackexchange.com/2.1/users/",
+      url: "https://api.github.com/legacy/user/search/" + name,
       type: "GET",
       dataType: "json",
       data: {
-        site: "stackoverflow",
-        sort: "reputation",
-        order: "desc",
-        inname: name,
-        key: "ucnOTpEVwsc9OK6gxvShlw(("
+        sort: "followers",
+        order: "desc"
       }
     });
 
-    request.done(function(result) {
-      var firstResult;
-      if (result.items && result.items.length > 0) {
-        firstResult = result.items[0];
-        searchByUserId(firstResult.user_id, firstResult);
-      } else {
-        drawFailureTags();
+    request.done(function(data) {
+      if (data.users && data.users.length > 0) {
+        searchGitHubRepos(data.users[0].username);
+      }
+    });
+  }
+
+  function searchGitHubRepos(username) {
+    var request = $.ajax({
+      url: "https://api.github.com/users/" + username + "/repos",
+      type: "GET",
+      dataType: "json",
+      data: {
+        type: "owner"
       }
     });
 
-    request.fail(function() {
-      drawFailureTags();
+    request.done(function(data) {
+      data.sort(function(x, y) { return y.watchers - x.watchers; });
+      for (var i = 0; i < Math.min(data.length, 5); ++i) {
+        $(Mustache.render(repoTemplate, data[i])).appendTo($github);
+      }
     });
   }
 
   function findUserFromLocationHash() {
     var userId = window.location.hash.replace(/^#/, "");
     if (userId.match(/^\d+$/)) {
-      searchByUserId(userId);
+      searchStackOverflowTags(userId);
     }
   }
 
@@ -443,7 +580,7 @@
 
     var query = $search.val();
     if (query.match(/^\s*\d+\s*$/)) {
-      searchByUserId(query);
+      searchStackOverflowTags(query);
     } else {
       searchByName(query);
     }
@@ -451,17 +588,32 @@
     return false;
   });
 
+  $tabs.on("click", "a.tab", function() {
+    var $link = $(this);
+    var selector = $link.attr("href");
+
+    $(".tab").removeClass("selected");
+    $link.addClass("selected");
+
+    $(".tab-page").hide();
+    $(selector).show();
+
+    return false;
+  });
+
   $links.on("click", "a.search", function() {
     drawUser(null);
+    $tabs.hide();
     $cloud.empty().hide();
+    $github.empty().hide();
     $links.hide();
-    $form.show()[0].reset();
+    $form.css("visibility", "visible")[0].reset();
     $search.focus();
     window.location.hash = "";
     return false;
   });
 
-  if ($sites.length > 1) {
+  if ($("span", $sites).length > 1) {
     setInterval(function() {
       $sites.slideUp(function() {
         $sites.find("span:first").remove().appendTo($sites);
